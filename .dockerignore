@@ -1,0 +1,63 @@
+# Dependencies
+/vendor
+/node_modules
+
+# Environment files
+.env
+.env.backup
+.env.production
+
+# Development files
+.git
+.gitignore
+.gitattributes
+.editorconfig
+
+# IDE files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Testing
+.phpunit.result.cache
+/coverage
+
+# Storage (will be mounted as volume)
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+
+# Database
+database/*.sqlite
+database/*.sqlite-journal
+
+# Build artifacts
+/public/build
+/public/hot
+/public/storage
+
+# Documentation
+README.md
+ADMIN_TOKEN_GUIDE.md
+ARABIC_TRANSLATION_GUIDE.md
+
+# Composer
+composer.phar
+
+# NPM
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore

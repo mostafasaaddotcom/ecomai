@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # Main Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecom-ai-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      # Mount source code for live development
+      - ./:/var/www/html
+      # Persist storage directory
+      - storage-data:/var/www/html/storage/app
+      # Exclude vendor and node_modules from host
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    ports:
+      - "8000:80"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3307
+      - DB_DATABASE=ecom_ai
+      - DB_USERNAME=my_user
+      - DB_PASSWORD=my_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6380
+      - CACHE_STORE=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecom-network
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MySQL Database Service
+  mysql:
+    image: mysql:8.0
+    container_name: ecom-ai-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3307"
+    environment:
+      MYSQL_DATABASE: ecom_ai
+      MYSQL_USER: my_user
+      MYSQL_PASSWORD: my_password
+      MYSQL_ROOT_PASSWORD: root_secret_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - ecom-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: ecom-ai-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6380"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecom-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # Queue Worker Service
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecom-ai-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - storage-data:/var/www/html/storage/app
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3307
+      - DB_DATABASE=ecom_ai
+      - DB_USERNAME=my_user
+      - DB_PASSWORD=my_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6380
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecom-network
+    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3 --max-jobs=1000
+
+  # Scheduler Service
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecom-ai-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - storage-data:/var/www/html/storage/app
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3307
+      - DB_DATABASE=ecom_ai
+      - DB_USERNAME=my_user
+      - DB_PASSWORD=my_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6380
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecom-network
+    command: php artisan schedule:work
+
+# Named Volumes for Data Persistence
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  storage-data:
+    driver: local
+
+# Network Configuration
+networks:
+  ecom-network:
+    driver: bridge
