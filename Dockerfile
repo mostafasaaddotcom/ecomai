@@ -32,6 +32,9 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 RUN npm ci && npm run build
 
+# Run migrations on container start
+RUN php artisan migrate --force || true
+
 # Laravel setup
 RUN php artisan storage:link || true
 RUN php artisan config:cache
