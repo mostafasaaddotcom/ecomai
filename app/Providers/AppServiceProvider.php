@@ -21,7 +21,13 @@ class AppServiceProvider extends ServiceProvider
     {
         if (config('app.env') === 'production') 
         {
+            // Force HTTPS in production
             \Illuminate\Support\Facades\URL::forceScheme('https');
+
+            // Force Livewire to use HTTPS
+            \Livewire\Livewire::setUpdateRoute(function ($handle) {
+                return Route::post('/livewire/update', $handle);
+            });
         }
     }
 }
