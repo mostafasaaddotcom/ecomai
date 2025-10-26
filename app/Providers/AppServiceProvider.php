@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route; 
+use Illuminate\Support\Facades\URL; 
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,8 +24,8 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') 
         {
             // Force HTTPS in production
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-
+            URL::forceScheme('https');
+            
             // Force Livewire to use HTTPS
             \Livewire\Livewire::setUpdateRoute(function ($handle) {
                 return Route::post('/livewire/update', $handle);
