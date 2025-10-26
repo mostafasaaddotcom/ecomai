@@ -25,11 +25,6 @@ class AppServiceProvider extends ServiceProvider
         {
             // Force HTTPS in production
             URL::forceScheme('https');
-            
-            // Force Livewire to use HTTPS
-            \Livewire\Livewire::setUpdateRoute(function ($handle) {
-                return Route::post('/livewire/update', $handle);
-            });
         }
     }
 }
