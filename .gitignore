@@ -3,3 +3,4 @@
 .env.backup
 .env
 /storage/*.key
+config/livewire.php
