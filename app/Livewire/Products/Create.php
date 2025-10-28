@@ -7,20 +7,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.app')]
 class Create extends Component
 {
-    use WithFileUploads;
-
     public string $name = '';
 
     public string $description_user = '';
 
     public string $description_ai = '';
 
-    public $main_image;
+    public string $main_image = '';
 
     public string $type = 'physical';
 
@@ -33,22 +30,16 @@ class Create extends Component
             'name' => ['required', 'string', 'max:255'],
             'description_user' => ['nullable', 'string'],
             'description_ai' => ['nullable', 'string'],
-            'main_image' => ['nullable', 'image', 'max:2048'], // 2MB Max
+            'main_image' => ['nullable', 'string'], // Path from AJAX upload
             'type' => ['required', 'in:physical,digital'],
         ]);
-
-        // Handle file upload
-        $imagePath = null;
-        if ($this->main_image) {
-            $imagePath = $this->main_image->store('products', 'public');
-        }
 
         $product = Product::create([
             'user_id' => Auth::id(),
             'name' => $validated['name'],
             'description_user' => $validated['description_user'],
             'description_ai' => $validated['description_ai'],
-            'main_image_url' => $imagePath,
+            'main_image_url' => $validated['main_image'] ?: null,
             'type' => $validated['type'],
         ]);
 

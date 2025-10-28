@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImageUploadController;
 use App\Livewire\Dashboard;
 use App\Livewire\Products\Analysis;
 use App\Livewire\Products\Copywriting;
@@ -51,6 +52,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('products/{product}/analysis', Analysis::class)->name('products.analysis');
     Route::get('products/{product}/copywriting', Copywriting::class)->name('products.copywriting');
     Route::get('products/{product}/images', Images::class)->name('products.images');
+
+    // Image upload routes (AJAX)
+    Route::post('upload-main-image', [ImageUploadController::class, 'uploadMainImage'])->name('upload.main-image');
+    Route::post('products/{product}/upload-images', [ImageUploadController::class, 'uploadProductImages'])->name('upload.product-images');
 });
 
 require __DIR__.'/auth.php';

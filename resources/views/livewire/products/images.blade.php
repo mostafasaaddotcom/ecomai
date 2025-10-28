@@ -320,29 +320,62 @@
             </form>
 
             {{-- Upload Images Form --}}
-            <form x-show="activeTab === 'upload'" wire:submit="uploadImages" class="space-y-6">
+            <div x-show="activeTab === 'upload'" x-data="imageUploadManager()" class="space-y-6">
                 {{-- File Upload --}}
                 <div>
                     <flux:label>{{ __('Select Images') }} <span class="text-red-500">*</span></flux:label>
                     <input
                         type="file"
-                        wire:model="uploadedImages"
+                        @change="handleFileSelect($event)"
                         multiple
                         accept="image/*"
                         class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        required
+                        :disabled="uploading"
                     >
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Max file size: 10MB per image. Multiple images allowed.') }}</p>
-                    @error('uploadedImages.*') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                </div>
+
+                {{-- Selected Files Preview --}}
+                <div x-show="selectedFiles.length > 0" class="space-y-2">
+                    <flux:label>{{ __('Selected Files') }}</flux:label>
+                    <div class="space-y-1">
+                        <template x-for="(file, index) in selectedFiles" :key="index">
+                            <div class="flex items-center justify-between rounded-lg bg-gray-50 p-2 text-sm dark:bg-gray-800">
+                                <span class="text-gray-900 dark:text-white" x-text="file.name"></span>
+                                <span class="text-gray-500 dark:text-gray-400" x-text="formatFileSize(file.size)"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Upload Progress --}}
+                <div x-show="uploading" class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-700 dark:text-gray-300">{{ __('Uploading...') }}</span>
+                        <span class="text-gray-600 dark:text-gray-400" x-text="`${uploadProgress}%`"></span>
+                    </div>
+                    <div class="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                        <div class="h-full bg-blue-500 transition-all duration-300" :style="`width: ${uploadProgress}%`"></div>
+                    </div>
+                </div>
+
+                {{-- Success Message --}}
+                <div x-show="successMessage" class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                    <span x-text="successMessage"></span>
+                </div>
+
+                {{-- Error Message --}}
+                <div x-show="errorMessage" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                    <span x-text="errorMessage"></span>
                 </div>
 
                 {{-- Type Selection --}}
                 <div>
                     <flux:label>{{ __('Image Type') }} <span class="text-red-500">*</span></flux:label>
                     <select
-                        wire:model="uploadType"
+                        x-model="uploadType"
                         class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        required
+                        :disabled="uploading"
                     >
                         @foreach ($imageTypes as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
@@ -351,19 +384,20 @@
                 </div>
 
                 {{-- Modal Footer --}}
-                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                <div class="flex justify-end gap-2">
                     <flux:modal.close>
                         <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                     </flux:modal.close>
 
                     <flux:button
-                        type="submit"
+                        type="button"
+                        @click.prevent="uploadImages()"
                         variant="primary"
                     >
                         {{ __('Upload Images') }}
                     </flux:button>
                 </div>
-            </form>
+            </div>
         </div>
     </flux:modal>
 
@@ -486,3 +520,142 @@
         @endif
     </div>
 </div>
+
+<script>
+    function imageUploadManager() {
+        return {
+            selectedFiles: [],
+            uploading: false,
+            uploadProgress: 0,
+            successMessage: '',
+            errorMessage: '',
+            uploadType: 'other',
+
+            handleFileSelect(event) {
+                this.selectedFiles = Array.from(event.target.files);
+                this.successMessage = '';
+                this.errorMessage = '';
+
+                // Validate files
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                const invalidFiles = this.selectedFiles.filter(file => {
+                    return !file.type.startsWith('image/') || file.size > maxSize;
+                });
+
+                if (invalidFiles.length > 0) {
+                    this.errorMessage = 'Some files are invalid. Please ensure all files are images under 10MB.';
+                    this.selectedFiles = [];
+                    event.target.value = '';
+                }
+            },
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            },
+
+            async uploadImages() {
+                if (this.selectedFiles.length === 0) {
+                    this.errorMessage = 'Please select at least one image';
+                    return;
+                }
+
+                // Check if CSRF token exists
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfToken) {
+                    this.errorMessage = 'CSRF token not found. Please refresh the page.';
+                    console.error('CSRF token meta tag is missing from the page');
+                    return;
+                }
+
+                this.uploading = true;
+                this.uploadProgress = 0;
+                this.successMessage = '';
+                this.errorMessage = '';
+
+                const formData = new FormData();
+                this.selectedFiles.forEach((file, index) => {
+                    formData.append('images[]', file);
+                });
+                formData.append('upload_type', this.uploadType);
+
+                try {
+                    const xhr = new XMLHttpRequest();
+
+                    // Track upload progress
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                        }
+                    });
+
+                    // Handle response
+                    xhr.addEventListener('load', () => {
+                        this.uploading = false;
+
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.success) {
+                                    this.successMessage = `Successfully uploaded ${response.count} image(s)`;
+                                    this.selectedFiles = [];
+                                    this.uploadProgress = 0;
+
+                                    // Refresh Livewire images
+                                    @this.call('refreshImages');
+
+                                    // Reset file input
+                                    const fileInput = document.querySelector('#upload-tab-content input[type="file"]');
+                                    if (fileInput) fileInput.value = '';
+
+                                    // Clear success message after 5 seconds
+                                    setTimeout(() => {
+                                        this.successMessage = '';
+                                    }, 5000);
+                                } else {
+                                    this.errorMessage = response.message || 'Upload failed';
+                                }
+                            } catch (e) {
+                                this.errorMessage = 'Failed to parse server response';
+                                console.error('Parse error:', e, xhr.responseText);
+                            }
+                        } else {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                // Handle validation errors
+                                if (response.errors) {
+                                    const errorMessages = Object.values(response.errors).flat();
+                                    this.errorMessage = errorMessages.join(', ');
+                                } else {
+                                    this.errorMessage = response.message || `Upload failed (${xhr.status})`;
+                                }
+                            } catch (e) {
+                                this.errorMessage = `Upload failed (${xhr.status})`;
+                                console.error('Error response:', xhr.responseText);
+                            }
+                        }
+                    });
+
+                    // Handle errors
+                    xhr.addEventListener('error', () => {
+                        this.uploading = false;
+                        this.errorMessage = 'Network error occurred. Please check your connection.';
+                    });
+
+                    // Send request
+                    xhr.open('POST', '{{ route('upload.product-images', $product->id) }}');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.content);
+                    xhr.send(formData);
+
+                } catch (error) {
+                    this.uploading = false;
+                    this.errorMessage = 'An error occurred: ' + error.message;
+                    console.error('Upload error:', error);
+                }
+            }
+        };
+    }
+</script>

@@ -10,13 +10,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.app')]
 class Images extends Component
 {
-    use WithFileUploads;
-
     public Product $product;
 
     public bool $isGenerating = false;
@@ -36,9 +33,7 @@ class Images extends Component
 
     public int $expertCount = 0;
 
-    // Upload fields
-    public $uploadedImages = [];
-
+    // Upload type for AJAX upload
     public string $uploadType = 'other';
 
     // Image prompts for editing
@@ -211,46 +206,17 @@ class Images extends Component
     }
 
     /**
-     * Upload images manually.
+     * Refresh images after AJAX upload.
      */
-    public function uploadImages(): void
+    public function refreshImages(): void
     {
-        $this->validate([
-            'uploadedImages.*' => ['required', 'image', 'max:10240'], // Max 10MB
-            'uploadType' => ['required', 'string'],
-        ]);
+        $this->product->load('images');
 
-        try {
-            foreach ($this->uploadedImages as $image) {
-                // Store the image
-                $path = $image->store('product-images', 'public');
-                $url = Storage::url($path);
-
-                // Create product image record
-                ProductImage::create([
-                    'user_id' => Auth::id(),
-                    'product_id' => $this->product->id,
-                    'type' => $this->uploadType,
-                    'image_url' => $url,
-                    'is_ai_generated' => false,
-                    'status' => 'completed',
-                ]);
+        // Initialize image prompts for new images
+        foreach ($this->product->images as $image) {
+            if (!isset($this->imagePrompts[$image->id])) {
+                $this->imagePrompts[$image->id] = $image->prompt;
             }
-
-            session()->flash('message', 'Images uploaded successfully.');
-
-            // Refresh images
-            $this->product->load('images');
-
-            // Reset upload form
-            $this->reset(['uploadedImages', 'uploadType']);
-            $this->uploadType = 'other';
-        } catch (\Exception $e) {
-            Log::error('Error uploading product images', [
-                'product_id' => $this->product->id,
-                'error' => $e->getMessage(),
-            ]);
-            session()->flash('error', 'An error occurred while uploading images. Please try again.');
         }
     }
 
