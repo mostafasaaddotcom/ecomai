@@ -646,7 +646,7 @@
                     });
 
                     // Send request
-                    xhr.open('POST', '{{ route('upload.product-images', $product->id) }}');
+                    xhr.open('POST', '{{ asset('products/' . $product->id . '/upload-images') }}');
                     xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.content);
                     xhr.send(formData);
 

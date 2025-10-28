@@ -208,7 +208,7 @@
                     });
 
                     // Send request
-                    xhr.open('POST', '{{ route('upload.main-image') }}');
+                    xhr.open('POST', '{{ asset('upload-main-image') }}');
                     xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.content);
                     xhr.send(formData);
 
