@@ -274,4 +274,68 @@ class ProductImageController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Download the specified product image.
+     */
+    public function download(ProductImage $productImage)
+    {
+        // Check if user can access this image
+        if (!auth()->user()->canAccessResource($productImage)) {
+            abort(403, 'Forbidden. This product image does not belong to you.');
+        }
+
+        // Check if image is completed and has a URL
+        if ($productImage->status !== 'completed' || !$productImage->image_url) {
+            abort(404, 'Image not available for download.');
+        }
+
+        try {
+            // Fetch the image content from the external URL
+            $imageContent = file_get_contents($productImage->image_url);
+
+            if ($imageContent === false) {
+                abort(500, 'Failed to fetch image from storage.');
+            }
+
+            // Get the file extension from the URL or default to jpg
+            $extension = pathinfo(parse_url($productImage->image_url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+
+            // Create a filename: product_{id}_{type}_{timestamp}.{ext}
+            $filename = sprintf(
+                'product_%d_%s_%s.%s',
+                $productImage->product_id,
+                $productImage->type,
+                $productImage->id,
+                $extension
+            );
+
+            // Determine MIME type based on extension
+            $mimeTypes = [
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+            ];
+            $mimeType = $mimeTypes[strtolower($extension)] ?? 'application/octet-stream';
+
+            // Return the image as a download
+            return response($imageContent, 200)
+                ->header('Content-Type', $mimeType)
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+
+        } catch (\Exception $e) {
+            Log::error('Image download failed', [
+                'error' => $e->getMessage(),
+                'image_id' => $productImage->id,
+                'image_url' => $productImage->image_url,
+            ]);
+
+            abort(500, 'Failed to download image.');
+        }
+    }
 }

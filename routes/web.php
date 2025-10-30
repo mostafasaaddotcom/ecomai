@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ProductImageController;
 use App\Http\Controllers\ImageUploadController;
 use App\Livewire\Dashboard;
 use App\Livewire\Products\Analysis;
@@ -43,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
             ),
         )
         ->name('two-factor.show');
+
+    // Product image download route (must be before products/{product}/images to avoid route conflict)
+    Route::get('products/images/{productImage}/download', [ProductImageController::class, 'download'])->name('products.images.download');
 
     // Products routes
     Route::get('products', Index::class)->name('products.index');

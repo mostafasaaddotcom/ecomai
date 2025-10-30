@@ -496,7 +496,7 @@
                                 @endif
 
                                 @if ($image->image_url && $image->status === 'completed')
-                                    <a href="{{ $image->image_url }}" download class="text-xs">
+                                    <a href="{{ route('products.images.download', $image) }}" class="text-xs">
                                         <flux:button size="sm" variant="ghost">
                                             {{ __('Download') }}
                                         </flux:button>
