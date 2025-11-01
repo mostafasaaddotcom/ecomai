@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ApiServiceKeyController;
 use App\Http\Controllers\Api\V1\ProductAnalysisController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductCopyController;
@@ -7,6 +8,9 @@ use App\Http\Controllers\Api\V1\ProductImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    // API Service Keys
+    Route::get('api-service-keys', [ApiServiceKeyController::class, 'show']);
+
     Route::get('products/{product}', [ProductController::class, 'show']);
     Route::put('products/{product}', [ProductController::class, 'update']);
 

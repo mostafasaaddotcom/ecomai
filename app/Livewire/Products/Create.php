@@ -47,6 +47,7 @@ class Create extends Component
         try {
             Http::post(config('app.n8n_base_url') . 'update-description-using-ai', [
                 'product_id' => $product->id,
+                'user_id' => Auth::id(),
                 'name' => $product->name,
                 'description_user' => $product->description_user,
                 'description_ai' => $product->description_ai,

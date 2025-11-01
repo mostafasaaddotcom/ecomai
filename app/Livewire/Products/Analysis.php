@@ -112,6 +112,7 @@ class Analysis extends Component
             $response = Http::timeout(30)->post(config('app.n8n_base_url') . 'generate-product-analysis', [
                 'product_analysis_id' => $this->analysis->id,
                 'product_id' => $this->product->id,
+                'user_id' => Auth::id(),
                 'name' => $this->product->name,
                 'description_user' => $this->product->description_user,
                 'description_ai' => $this->product->description_ai,

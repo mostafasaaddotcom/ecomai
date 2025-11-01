@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -74,6 +75,38 @@ class User extends Authenticatable
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Get the API service keys for the user.
+     */
+    public function apiServiceKeys(): HasOne
+    {
+        return $this->hasOne(ApiServiceKey::class);
+    }
+
+    /**
+     * Get the Lahajati voices for the user.
+     */
+    public function lahajatiVoices(): HasMany
+    {
+        return $this->hasMany(UserLahajatiVoice::class);
+    }
+
+    /**
+     * Get the Lahajati performances for the user.
+     */
+    public function lahajatiPerformances(): HasMany
+    {
+        return $this->hasMany(UserLahajatiPerformance::class);
+    }
+
+    /**
+     * Get the Lahajati dialects for the user.
+     */
+    public function lahajatiDialects(): HasMany
+    {
+        return $this->hasMany(UserLahajatiDialect::class);
     }
 
     /**

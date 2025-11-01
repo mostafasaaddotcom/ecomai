@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
@@ -16,6 +17,23 @@ class Copywriting extends Component
     public Product $product;
 
     public bool $isGenerating = false;
+
+    // Voice generation tracking
+    public ?int $generatingVoiceForCopyId = null;
+
+    // Voice selection UI
+    public ?int $expandedVoiceSelectorCopyId = null;
+    public $userVoices = [];
+    public $userPerformances = [];
+    public $userDialects = [];
+
+    // Selected voice options per copy (array keyed by copy ID)
+    public array $selectedVoiceIds = [];
+    public array $selectedPerformanceIds = [];
+    public array $selectedDialectIds = [];
+
+    // Voice mode tracking (generate or upload) per copy
+    public array $voiceMode = []; // 'generate' or 'upload'
 
     // Form fields
     public string $language = '';
@@ -65,9 +83,26 @@ class Copywriting extends Component
 
         $this->product = $product->load(['copies', 'analysis']);
 
-        // Initialize copy content
+        // Load user's Lahajati preferences
+        $this->userVoices = Auth::user()->lahajatiVoices()->with('lahajatiVoice')->get();
+        $this->userPerformances = Auth::user()->lahajatiPerformances()->with('lahajatiPerformance')->get();
+        $this->userDialects = Auth::user()->lahajatiDialects()->with('lahajatiDialect')->get();
+
+        // Initialize copy content and default voice selections
         foreach ($this->product->copies as $copy) {
             $this->copyContent[$copy->id] = $copy->content;
+
+            // Set default selections (user's default preferences)
+            $defaultVoice = $this->userVoices->firstWhere('is_default', true);
+            $defaultPerformance = $this->userPerformances->firstWhere('is_default', true);
+            $defaultDialect = $this->userDialects->firstWhere('is_default', true);
+
+            $this->selectedVoiceIds[$copy->id] = $defaultVoice?->id;
+            $this->selectedPerformanceIds[$copy->id] = $defaultPerformance?->id;
+            $this->selectedDialectIds[$copy->id] = $defaultDialect?->id;
+
+            // Initialize voice mode to 'generate' by default
+            $this->voiceMode[$copy->id] = 'generate';
         }
     }
 
@@ -203,6 +238,14 @@ class Copywriting extends Component
     }
 
     /**
+     * Toggle voice selector expansion.
+     */
+    public function toggleVoiceSelector(int $copyId): void
+    {
+        $this->expandedVoiceSelectorCopyId = $this->expandedVoiceSelectorCopyId === $copyId ? null : $copyId;
+    }
+
+    /**
      * Update copy content.
      */
     public function updateCopy(int $copyId): void
@@ -245,6 +288,127 @@ class Copywriting extends Component
         $this->product->load('copies');
 
         session()->flash('message', 'Copy deleted successfully.');
+    }
+
+    /**
+     * Generate voice for a copy using Lahajati.
+     */
+    public function generateVoice(int $copyId): void
+    {
+        $copy = ProductCopy::findOrFail($copyId);
+
+        // Ensure the copy belongs to the authenticated user
+        if ($copy->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Check if user has Lahajati API key
+        $apiKey = Auth::user()->apiServiceKeys?->lahajati_key;
+        if (!$apiKey) {
+            session()->flash('error', 'Please add your Lahajati API key in Service Keys settings first.');
+            return;
+        }
+
+        // Get selected voice, performance, and dialect for this copy
+        $selectedVoiceId = $this->selectedVoiceIds[$copyId] ?? null;
+        $selectedPerformanceId = $this->selectedPerformanceIds[$copyId] ?? null;
+        $selectedDialectId = $this->selectedDialectIds[$copyId] ?? null;
+
+        if (!$selectedVoiceId || !$selectedPerformanceId || !$selectedDialectId) {
+            session()->flash('error', 'Please select voice, performance, and dialect options.');
+            return;
+        }
+
+        // Load the actual models
+        $userVoice = Auth::user()->lahajatiVoices()->with('lahajatiVoice')->find($selectedVoiceId);
+        $userPerformance = Auth::user()->lahajatiPerformances()->with('lahajatiPerformance')->find($selectedPerformanceId);
+        $userDialect = Auth::user()->lahajatiDialects()->with('lahajatiDialect')->find($selectedDialectId);
+
+        if (!$userVoice || !$userPerformance || !$userDialect) {
+            session()->flash('error', 'Selected voice options are invalid. Please select again.');
+            return;
+        }
+
+        $this->generatingVoiceForCopyId = $copyId;
+
+        try {
+            // Prepare webhook payload
+            $webhookPayload = [
+                'copy_id' => $copyId,
+                'text' => $copy->content,
+                'user_id' => Auth::id(),
+                'lahajati_key' => $apiKey,
+                'id_voice' => $userVoice->lahajatiVoice->lahajati_id,
+                'performance_id' => $userPerformance->lahajatiPerformance->lahajati_id,
+                'dialect_id' => $userDialect->lahajatiDialect->lahajati_id,
+                'input_mode' => '0',
+                'app_url' => config('app.url'),
+            ];
+
+            // Log the webhook payload for debugging
+            Log::info('Webhook payload for voice generation', [
+                'copy_id' => $copyId,
+                'payload' => $webhookPayload,
+            ]);
+
+            // Send webhook to n8n
+            $response = Http::timeout(30)->post(config('app.n8n_base_url') . 'generate-voice-copy', $webhookPayload);
+
+            if ($response->successful()) {
+                session()->flash('message', 'Voice generation started successfully. The page will refresh automatically when ready.');
+                // Refresh copies after a short delay
+                $this->product->load('copies');
+            } else {
+                Log::error('Webhook failed for voice generation', [
+                    'copy_id' => $copyId,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                session()->flash('error', 'Failed to generate voice. Please try again.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error generating voice', [
+                'copy_id' => $copyId,
+                'error' => $e->getMessage(),
+            ]);
+            session()->flash('error', 'An error occurred while generating voice. Please try again.');
+        } finally {
+            $this->generatingVoiceForCopyId = null;
+        }
+    }
+
+    /**
+     * Refresh a specific copy from the database.
+     */
+    public function refreshCopy(int $copyId): void
+    {
+        $copy = ProductCopy::findOrFail($copyId);
+
+        // Ensure the copy belongs to the authenticated user
+        if ($copy->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Reload the product copies
+        $this->product->load('copies');
+
+        // Update the copy content array
+        $this->copyContent[$copyId] = $copy->content;
+
+        session()->flash('message', 'Copy refreshed successfully.');
+    }
+
+    /**
+     * Handle successful voice upload from AJAX.
+     * This is called from the frontend after the upload completes.
+     */
+    #[On('voiceUploaded')]
+    public function voiceUploadSuccess(int $copyId): void
+    {
+        // Reload the product copies to get the updated voice_url_link
+        $this->product->load('copies');
+
+        session()->flash('message', 'Voice uploaded successfully.');
     }
 
     /**

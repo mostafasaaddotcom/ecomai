@@ -307,6 +307,174 @@
                                 >{{ $copy->content }}</textarea>
                             </div>
 
+                            {{-- Voice Player --}}
+                            @if ($copy->voice_url_link)
+                                <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Generated Voice') }}</label>
+                                    <audio controls class="w-full">
+                                        <source src="{{ $copy->voice_url_link }}" type="audio/mpeg">
+                                        {{ __('Your browser does not support the audio element.') }}
+                                    </audio>
+                                </div>
+                            @endif
+
+                            {{-- Voice Options Selector --}}
+                            <div class="rounded-lg border border-gray-200 dark:border-gray-700">
+                                <button
+                                    type="button"
+                                    wire:click="toggleVoiceSelector({{ $copy->id }})"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        {{ __('Voice Options') }}
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform {{ $expandedVoiceSelectorCopyId === $copy->id ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                @if ($expandedVoiceSelectorCopyId === $copy->id)
+                                    <div class="border-t border-gray-200 dark:border-gray-700 p-3 space-y-3">
+                                        {{-- Mode Selector Tabs --}}
+                                        <div class="flex gap-2 mb-3">
+                                            <button
+                                                type="button"
+                                                wire:click="$set('voiceMode.{{ $copy->id }}', 'generate')"
+                                                class="flex-1 px-3 py-2 text-xs font-medium rounded-lg {{ ($voiceMode[$copy->id] ?? 'generate') === 'generate' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}"
+                                            >
+                                                {{ __('Generate with Lahajati') }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                wire:click="$set('voiceMode.{{ $copy->id }}', 'upload')"
+                                                class="flex-1 px-3 py-2 text-xs font-medium rounded-lg {{ ($voiceMode[$copy->id] ?? 'generate') === 'upload' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}"
+                                            >
+                                                {{ __('Upload Voice File') }}
+                                            </button>
+                                        </div>
+
+                                        {{-- Generate Mode Content --}}
+                                        @if (($voiceMode[$copy->id] ?? 'generate') === 'generate')
+                                            @if ($userVoices->isEmpty() || $userPerformances->isEmpty() || $userDialects->isEmpty())
+                                                <div class="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                                                    <p class="text-xs text-yellow-800 dark:text-yellow-300">
+                                                        {{ __('You haven\'t configured your Lahajati preferences yet.') }}
+                                                        <a href="{{ route('settings.lahajati') }}" wire:navigate class="underline font-medium">
+                                                            {{ __('Configure now') }}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            @else
+                                                {{-- Voice Selector --}}
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        {{ __('Voice') }}
+                                                    </label>
+                                                    <select
+                                                        wire:model="selectedVoiceIds.{{ $copy->id }}"
+                                                        class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="">{{ __('Select voice...') }}</option>
+                                                        @foreach ($userVoices as $userVoice)
+                                                            <option value="{{ $userVoice->id }}">
+                                                                {{ $userVoice->lahajatiVoice->name }}
+                                                                @if ($userVoice->is_default) ({{ __('Default') }}) @endif
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+
+                                                {{-- Performance Selector --}}
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        {{ __('Performance') }}
+                                                    </label>
+                                                    <select
+                                                        wire:model="selectedPerformanceIds.{{ $copy->id }}"
+                                                        class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="">{{ __('Select performance...') }}</option>
+                                                        @foreach ($userPerformances as $userPerformance)
+                                                            <option value="{{ $userPerformance->id }}">
+                                                                {{ $userPerformance->lahajatiPerformance->name }}
+                                                                @if ($userPerformance->is_default) ({{ __('Default') }}) @endif
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+
+                                                {{-- Dialect Selector --}}
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        {{ __('Dialect') }}
+                                                    </label>
+                                                    <select
+                                                        wire:model="selectedDialectIds.{{ $copy->id }}"
+                                                        class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="">{{ __('Select dialect...') }}</option>
+                                                        @foreach ($userDialects as $userDialect)
+                                                            <option value="{{ $userDialect->id }}">
+                                                                {{ $userDialect->lahajatiDialect->name }}
+                                                                @if ($userDialect->is_default) ({{ __('Default') }}) @endif
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            @endif
+                                        @endif
+
+                                        {{-- Upload Mode Content --}}
+                                        @if (($voiceMode[$copy->id] ?? 'generate') === 'upload')
+                                            <div x-data="voiceUploadHandler({{ $copy->id }})" class="space-y-2">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        {{ __('Voice File') }}
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        accept=".mp3,.m4a,audio/mpeg,audio/mp4"
+                                                        @change="handleFileSelect"
+                                                        class="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                                                    >
+                                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                        {{ __('MP3 or M4A (Max 25MB)') }}
+                                                    </p>
+                                                </div>
+
+                                                {{-- Upload Progress --}}
+                                                <div x-show="uploading" class="rounded-lg bg-blue-50 p-2 dark:bg-blue-900/20">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <svg class="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        <span class="text-xs text-blue-800 dark:text-blue-300" x-text="`Uploading... ${progress}%`"></span>
+                                                    </div>
+                                                    <div class="w-full bg-blue-200 rounded-full h-1.5 dark:bg-blue-700">
+                                                        <div class="bg-blue-600 h-1.5 rounded-full dark:bg-blue-400" :style="`width: ${progress}%`"></div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Upload Error --}}
+                                                <div x-show="error" class="rounded-lg bg-red-50 p-2 dark:bg-red-900/20">
+                                                    <p class="text-xs text-red-800 dark:text-red-300" x-text="error"></p>
+                                                </div>
+
+                                                {{-- Upload Success --}}
+                                                <div x-show="success" class="rounded-lg bg-green-50 p-2 dark:bg-green-900/20">
+                                                    <p class="text-xs text-green-800 dark:text-green-300">{{ __('Voice uploaded successfully!') }}</p>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+
                             <div class="flex items-center gap-2">
                                 <flux:button
                                     wire:click="updateCopy({{ $copy->id }})"
@@ -315,6 +483,39 @@
                                 >
                                     {{ __('Update Copy') }}
                                 </flux:button>
+
+                               <flux:button
+                                    wire:click="generateVoice({{ $copy->id }})"
+                                    size="sm"
+                                    variant="outline"
+                                    :disabled="$generatingVoiceForCopyId === $copy->id"
+                                >
+                                    @if ($generatingVoiceForCopyId === $copy->id)
+                                        <svg class="mr-1 h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        {{ __('Generating...') }}
+                                    @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                        </svg>
+                                        {{ __('Generate Voice') }}
+                                    @endif
+                                </flux:button>
+
+
+                                @if ($copy->voice_url_link)
+                                    <flux:button
+                                        wire:click="refreshCopy({{ $copy->id }})"
+                                        size="sm"
+                                        variant="ghost"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    </flux:button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -322,4 +523,101 @@
             </div>
         @endif
     </div>
+
+    <script>
+        // Define voice upload handler globally for Alpine.js
+        window.voiceUploadHandler = function(copyId) {
+            return {
+                uploading: false,
+                progress: 0,
+                error: null,
+                success: false,
+
+                handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // Validate file size (25MB max)
+                    if (file.size > 25 * 1024 * 1024) {
+                        this.error = 'File size must be less than 25MB';
+                        return;
+                    }
+
+                    // Validate file type
+                    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a'];
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    const allowedExtensions = ['mp3', 'm4a'];
+
+                    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
+                        this.error = 'Only MP3 and M4A files are allowed';
+                        return;
+                    }
+
+                    this.uploadFile(file);
+                },
+
+                uploadFile(file) {
+                    const self = this;
+                    this.uploading = true;
+                    this.progress = 0;
+                    this.error = null;
+                    this.success = false;
+
+                    const formData = new FormData();
+                    formData.append('voice_file', file);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                    const xhr = new XMLHttpRequest();
+
+                    // Track upload progress
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            self.progress = Math.round((e.loaded / e.total) * 100);
+                        }
+                    });
+
+                    // Handle completion
+                    xhr.addEventListener('load', () => {
+                        self.uploading = false;
+
+                        if (xhr.status === 200) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                self.success = true;
+                                self.error = null;
+
+                                // Dispatch Livewire event to refresh the copy data
+                                window.Livewire.dispatch('voiceUploaded', { copyId: copyId });
+
+                                // Reset after 2 seconds
+                                setTimeout(() => {
+                                    self.success = false;
+                                    self.progress = 0;
+                                }, 2000);
+                            } else {
+                                self.error = response.message || 'Upload failed';
+                            }
+                        } else {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                self.error = response.message || 'Upload failed';
+                            } catch (e) {
+                                self.error = 'Upload failed';
+                            }
+                        }
+                    });
+
+                    // Handle error
+                    xhr.addEventListener('error', () => {
+                        self.uploading = false;
+                        self.error = 'Network error occurred during upload';
+                    });
+
+                    // Send request
+                    xhr.open('POST', `/product-copies/${copyId}/upload-voice`);
+                    xhr.send(formData);
+                }
+            };
+        };
+    </script>
 </div>

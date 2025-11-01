@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\ProductImageController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\VoiceUploadController;
 use App\Livewire\Dashboard;
 use App\Livewire\Products\Analysis;
 use App\Livewire\Products\Copywriting;
@@ -12,8 +13,10 @@ use App\Livewire\Products\Index;
 use App\Livewire\Products\Show;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\ApiTokens;
+use App\Livewire\Settings\LahajatiSettings;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
+use App\Livewire\Settings\ServiceKeys;
 use App\Livewire\Settings\TwoFactor;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -33,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/password', Password::class)->name('settings.password');
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
     Route::get('settings/api-tokens', ApiTokens::class)->name('settings.api-tokens');
+    Route::get('settings/service-keys', ServiceKeys::class)->name('settings.service-keys');
+    Route::get('settings/lahajati', LahajatiSettings::class)->name('settings.lahajati');
 
     Route::get('settings/two-factor', TwoFactor::class)
         ->middleware(
@@ -60,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
     // Image upload routes (AJAX)
     Route::post('upload-main-image', [ImageUploadController::class, 'uploadMainImage'])->name('upload.main-image');
     Route::post('products/{product}/upload-images', [ImageUploadController::class, 'uploadProductImages'])->name('upload.product-images');
+
+    // Voice upload route (AJAX)
+    Route::post('product-copies/{copy}/upload-voice', [VoiceUploadController::class, 'uploadVoice'])->name('upload.voice');
 });
 
 require __DIR__.'/auth.php';
