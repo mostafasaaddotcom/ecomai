@@ -58,6 +58,18 @@
             {{ __('Images') }}
         </a>
 
+        {{-- Ad Creatives Tab --}}
+        <a
+            href="{{ route('products.ad-creatives', $product) }}"
+            wire:navigate
+            class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors {{ $active === 'ad-creatives' ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200' }}"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+            </svg>
+            {{ __('Ad Creatives') }}
+        </a>
+
         {{-- Spacer to push action buttons to the right --}}
         <div class="ml-auto flex items-center gap-2 pb-3">
             <flux:button :href="route('products.index')" wire:navigate size="sm" variant="ghost" icon="arrow-left">

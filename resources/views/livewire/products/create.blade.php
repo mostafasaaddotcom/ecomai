@@ -31,6 +31,33 @@
             </div>
 
             <div>
+                <flux:label>{{ __('Store (Optional)') }}</flux:label>
+                <select
+                    wire:model="user_store_id"
+                    class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                >
+                    <option value="">{{ __('No store selected') }}</option>
+                    @foreach ($stores as $store)
+                        <option value="{{ $store->id }}">
+                            {{ $store->name }} ({{ ucfirst($store->platform) }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ __('Select a store to link with this product') }}
+                </p>
+            </div>
+
+            <flux:input
+                wire:model="price"
+                :label="__('Price (Optional)')"
+                type="number"
+                step="0.01"
+                min="0"
+                :placeholder="__('0.00')"
+            />
+
+            <div>
                 <flux:label>{{ __('User Description') }}</flux:label>
                 <textarea
                     wire:model="description_user"

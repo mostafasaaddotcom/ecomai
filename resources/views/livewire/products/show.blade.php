@@ -32,6 +32,26 @@
                 </div>
             </div>
 
+            {{-- Store Link URL --}}
+            @if ($product->store_link_url)
+                <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Store Link') }}</p>
+                    <div class="mt-1">
+                        <a
+                            href="{{ $product->store_link_url }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                        >
+                            {{ $product->store_link_url }}
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             {{-- User Description --}}
             @if ($product->description_user)
                 <div>

@@ -31,7 +31,7 @@ class ProductController extends Controller
     /**
      * Update the specified product.
      *
-     * Update a product's AI description. Admin tokens can update any product.
+     * Update a product's AI description and/or store link URL. Admin tokens can update any product.
      * Regular tokens can only update products belonging to the authenticated user.
      */
     public function update(Request $request, Product $product): ProductResource|JsonResponse
@@ -45,13 +45,12 @@ class ProductController extends Controller
 
         // Validate the request
         $validated = $request->validate([
-            'description_ai' => ['required', 'string'],
+            'description_ai' => ['nullable', 'string'],
+            'store_link_url' => ['nullable', 'url'],
         ]);
 
-        // Update only the description_ai field
-        $product->update([
-            'description_ai' => $validated['description_ai'],
-        ]);
+        // Update the product with validated fields
+        $product->update($validated);
 
         return new ProductResource($product);
     }

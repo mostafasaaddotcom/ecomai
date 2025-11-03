@@ -24,6 +24,8 @@ class Product extends Model
         'description_ai',
         'main_image_url',
         'type',
+        'price',
+        'store_link_url',
     ];
 
     /**
@@ -68,6 +70,14 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    /**
+     * Get the ad creatives for the product.
+     */
+    public function adCreatives(): HasMany
+    {
+        return $this->hasMany(AdCreative::class);
     }
 
     /**

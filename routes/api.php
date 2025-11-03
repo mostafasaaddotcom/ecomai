@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdCreativeController;
 use App\Http\Controllers\Api\V1\ApiServiceKeyController;
 use App\Http\Controllers\Api\V1\ProductAnalysisController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -30,4 +31,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('product-images/reference/{referenceId}', [ProductImageController::class, 'getByReferenceId']);
     Route::put('product-images/{productImage}', [ProductImageController::class, 'update']);
     Route::post('product-images/webhook', [ProductImageController::class, 'webhook']);
+
+    // Ad Creatives
+    Route::put('ad-creatives/{adCreative}', [AdCreativeController::class, 'update']);
 });

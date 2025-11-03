@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\ProductImageController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\VoiceUploadController;
 use App\Livewire\Dashboard;
+use App\Livewire\Products\AdCreatives;
 use App\Livewire\Products\Analysis;
 use App\Livewire\Products\Copywriting;
 use App\Livewire\Products\Create;
@@ -17,6 +18,7 @@ use App\Livewire\Settings\LahajatiSettings;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\ServiceKeys;
+use App\Livewire\Settings\StoreSettings;
 use App\Livewire\Settings\TwoFactor;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -37,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
     Route::get('settings/api-tokens', ApiTokens::class)->name('settings.api-tokens');
     Route::get('settings/service-keys', ServiceKeys::class)->name('settings.service-keys');
+    Route::get('settings/stores', StoreSettings::class)->name('settings.stores');
     Route::get('settings/lahajati', LahajatiSettings::class)->name('settings.lahajati');
 
     Route::get('settings/two-factor', TwoFactor::class)
@@ -61,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('products/{product}/analysis', Analysis::class)->name('products.analysis');
     Route::get('products/{product}/copywriting', Copywriting::class)->name('products.copywriting');
     Route::get('products/{product}/images', Images::class)->name('products.images');
+    Route::get('products/{product}/ad-creatives', AdCreatives::class)->name('products.ad-creatives');
 
     // Image upload routes (AJAX)
     Route::post('upload-main-image', [ImageUploadController::class, 'uploadMainImage'])->name('upload.main-image');

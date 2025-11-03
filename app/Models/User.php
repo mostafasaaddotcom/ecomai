@@ -110,6 +110,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the stores for the user.
+     */
+    public function stores(): HasMany
+    {
+        return $this->hasMany(UserStore::class);
+    }
+
+    /**
+     * Get the ad creatives for the user.
+     */
+    public function adCreatives(): HasMany
+    {
+        return $this->hasMany(AdCreative::class);
+    }
+
+    /**
      * Check if the current token has admin abilities.
      */
     public function hasAdminToken(): bool
