@@ -18,16 +18,36 @@
     {{-- Create New Ad Creative Button --}}
     <div class="flex justify-between items-center">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Ad Creatives') }}</h2>
-        <flux:modal.trigger name="ad-creatives-modal">
-            <flux:button
-                variant="primary"
-                icon="sparkles"
-                x-data=""
-                x-on:click.prevent="$dispatch('open-modal', 'ad-creatives-modal')"
-            >
-                {{ __('Create New Ad Creative') }}
-            </flux:button>
-        </flux:modal.trigger>
+        <div class="flex gap-2">
+            {{-- Test Campaign Button --}}
+            <flux:modal.trigger name="test-campaign-modal">
+                <flux:button
+                    variant="outline"
+                    icon="rocket-launch"
+                    x-data=""
+                    x-on:click.prevent="$dispatch('open-modal', 'test-campaign-modal')"
+                >
+                    {{ __('Create a Test Campaign') }}
+                    @if (count($selectedAdCreativeIds) > 0)
+                        <span class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {{ count($selectedAdCreativeIds) }}
+                        </span>
+                    @endif
+                </flux:button>
+            </flux:modal.trigger>
+
+            {{-- Create New Ad Creative Button --}}
+            <flux:modal.trigger name="ad-creatives-modal">
+                <flux:button
+                    variant="primary"
+                    icon="sparkles"
+                    x-data=""
+                    x-on:click.prevent="$dispatch('open-modal', 'ad-creatives-modal')"
+                >
+                    {{ __('Create New Ad Creative') }}
+                </flux:button>
+            </flux:modal.trigger>
+        </div>
     </div>
 
     {{-- Create Ad Creative Modal --}}
@@ -297,6 +317,187 @@
         </div>
     </flux:modal>
 
+    {{-- Test Campaign Modal --}}
+    <flux:modal name="test-campaign-modal" class="max-w-2xl">
+        <form wire:submit="createTestCampaign" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Create a Test Campaign') }}</flux:heading>
+                <flux:subheading>{{ __('Select meta profile and campaign settings to create a test campaign') }}</flux:subheading>
+            </div>
+
+            {{-- Selected Ad Creatives Count --}}
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    {{ count($selectedAdCreativeIds) }} {{ __('ad creative(s) selected') }}
+                </p>
+            </div>
+
+            {{-- Meta Profile Selection --}}
+            <div>
+                <flux:label class="mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {{ __('Meta Profile') }}
+                    <span class="text-red-500">*</span>
+                </flux:label>
+                <div class="relative">
+                    <select
+                        wire:model.live="selectedMetaProfileId"
+                        class="mt-1 block w-full appearance-none rounded-xl border-2 border-gray-300 bg-gradient-to-br from-white to-gray-50 px-4 py-3.5 pr-10 text-sm font-medium text-gray-900 shadow-sm transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-white dark:hover:border-blue-500"
+                        required
+                    >
+                        <option value="" class="text-gray-500">{{ __('Select a meta profile...') }}</option>
+                        @foreach ($metaProfiles as $profile)
+                            <option value="{{ $profile['id'] }}" class="py-2">
+                                {{ $profile['name'] }}
+                                @if ($profile['is_default'])
+                                    ⭐ {{ __('Default') }}
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                @error('selectedMetaProfileId')
+                    <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Campaign Selection --}}
+            <div>
+                <flux:label class="mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    {{ __('Campaign to Duplicate') }}
+                    <span class="text-red-500">*</span>
+                </flux:label>
+                <div class="relative">
+                    <select
+                        wire:model="selectedCampaignId"
+                        class="mt-1 block w-full appearance-none rounded-xl border-2 px-4 py-3.5 pr-10 text-sm font-medium shadow-sm transition-all focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 {{ $selectedMetaProfileId ? 'border-gray-300 bg-gradient-to-br from-white to-gray-50 text-gray-900 hover:border-purple-400 focus:border-purple-500 focus:ring-purple-500/20 dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-white dark:hover:border-purple-500' : 'border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500' }}"
+                        :disabled="!$selectedMetaProfileId"
+                        required
+                    >
+                        <option value="" class="text-gray-500">{{ __('Select a campaign...') }}</option>
+                        @foreach ($this->availableCampaigns as $campaign)
+                            <option value="{{ $campaign['id'] }}" class="py-2">
+                                {{ $campaign['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                @if (!$selectedMetaProfileId)
+                    <p class="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {{ __('Please select a meta profile first') }}
+                    </p>
+                @endif
+                @error('selectedCampaignId')
+                    <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Ad Set Selection --}}
+            <div>
+                <flux:label class="mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    {{ __('Ad Set to Duplicate') }}
+                    <span class="text-red-500">*</span>
+                </flux:label>
+                <div class="relative">
+                    <select
+                        wire:model="selectedAdSetId"
+                        class="mt-1 block w-full appearance-none rounded-xl border-2 px-4 py-3.5 pr-10 text-sm font-medium shadow-sm transition-all focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 {{ $selectedMetaProfileId ? 'border-gray-300 bg-gradient-to-br from-white to-gray-50 text-gray-900 hover:border-green-400 focus:border-green-500 focus:ring-green-500/20 dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-white dark:hover:border-green-500' : 'border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500' }}"
+                        :disabled="!$selectedMetaProfileId"
+                        required
+                    >
+                        <option value="" class="text-gray-500">{{ __('Select an ad set...') }}</option>
+                        @foreach ($this->availableAdSets as $adSet)
+                            <option value="{{ $adSet['id'] }}" class="py-2">
+                                {{ $adSet['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                @if (!$selectedMetaProfileId)
+                    <p class="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {{ __('Please select a meta profile first') }}
+                    </p>
+                @endif
+                @error('selectedAdSetId')
+                    <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Campaign Name --}}
+            <div>
+                <flux:label class="mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {{ __('New Campaign Name') }}
+                    <span class="text-red-500">*</span>
+                </flux:label>
+                <div class="relative">
+                    <input
+                        type="text"
+                        wire:model="testCampaignName"
+                        placeholder="{{ __('e.g., Summer Sale Test Campaign') }}"
+                        class="mt-1 block w-full rounded-xl border-2 border-gray-300 bg-gradient-to-br from-white to-gray-50 px-4 py-3.5 pl-11 text-sm font-medium text-gray-900 shadow-sm transition-all placeholder:text-gray-400 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-white dark:placeholder:text-gray-500 dark:hover:border-indigo-500"
+                        required
+                    >
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </div>
+                </div>
+                @error('testCampaignName')
+                    <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer --}}
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button
+                    type="submit"
+                    variant="primary"
+                    wire:loading.attr="disabled"
+                    icon="rocket-launch"
+                >
+                    {{ __('Create Test Campaign') }}
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
     {{-- Ad Creatives Grid --}}
     <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-zinc-900">
         @if ($product->adCreatives->isEmpty())
@@ -312,7 +513,19 @@
         @else
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($product->adCreatives as $creative)
-                    <div class="rounded-lg border border-gray-300 bg-white shadow-sm overflow-hidden dark:border-gray-700 dark:bg-zinc-800">
+                    <div class="relative rounded-lg border-2 shadow-sm overflow-hidden transition-all {{ in_array($creative->id, $selectedAdCreativeIds) ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20 ring-2 ring-blue-500 dark:ring-blue-400' : 'border-gray-300 bg-white dark:border-gray-700 dark:bg-zinc-800' }}">
+                        {{-- Selection Checkbox --}}
+                        <div class="absolute top-2 left-2 z-10">
+                            <label class="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    wire:model.live="selectedAdCreativeIds"
+                                    value="{{ $creative->id }}"
+                                    class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                                >
+                            </label>
+                        </div>
+
                         {{-- Facebook-Style Ad Preview --}}
                         <div class="p-3 bg-gray-50 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                             <div class="flex items-center gap-2">

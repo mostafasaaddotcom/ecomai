@@ -118,6 +118,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the meta profiles for the user.
+     */
+    public function metaProfiles(): HasMany
+    {
+        return $this->hasMany(UserMetaProfile::class);
+    }
+
+    /**
      * Get the ad creatives for the user.
      */
     public function adCreatives(): HasMany

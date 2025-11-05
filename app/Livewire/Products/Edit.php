@@ -26,6 +26,8 @@ class Edit extends Component
 
     public string $type = 'physical';
 
+    public string $store_link_url = '';
+
     /**
      * Mount the component.
      */
@@ -41,6 +43,7 @@ class Edit extends Component
         $this->description_user = $product->description_user ?? '';
         $this->description_ai = $product->description_ai ?? '';
         $this->type = $product->type;
+        $this->store_link_url = $product->store_link_url ?? '';
     }
 
     /**
@@ -54,6 +57,7 @@ class Edit extends Component
             'description_ai' => ['nullable', 'string'],
             'main_image' => ['nullable', 'image', 'max:2048'], // 2MB Max
             'type' => ['required', 'in:physical,digital'],
+            'store_link_url' => ['nullable', 'url'],
         ]);
 
         // Handle new file upload
@@ -72,6 +76,7 @@ class Edit extends Component
             'description_ai' => $validated['description_ai'],
             'main_image_url' => $validated['main_image_url'] ?? $this->product->main_image_url,
             'type' => $validated['type'],
+            'store_link_url' => $validated['store_link_url'],
         ]);
 
         session()->flash('message', 'Product updated successfully.');

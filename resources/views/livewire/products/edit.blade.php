@@ -30,6 +30,13 @@
                 </select>
             </div>
 
+            <flux:input
+                wire:model="store_link_url"
+                :label="__('Store Link URL')"
+                type="url"
+                :placeholder="__('Enter store or product page URL')"
+            />
+
             <div>
                 <flux:label>{{ __('User Description') }}</flux:label>
                 <textarea

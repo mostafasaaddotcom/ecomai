@@ -15,6 +15,7 @@ use App\Livewire\Products\Show;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\ApiTokens;
 use App\Livewire\Settings\LahajatiSettings;
+use App\Livewire\Settings\MetaProfiles;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\ServiceKeys;
@@ -40,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/api-tokens', ApiTokens::class)->name('settings.api-tokens');
     Route::get('settings/service-keys', ServiceKeys::class)->name('settings.service-keys');
     Route::get('settings/stores', StoreSettings::class)->name('settings.stores');
+    Route::get('settings/meta-profiles', MetaProfiles::class)->name('settings.meta-profiles');
     Route::get('settings/lahajati', LahajatiSettings::class)->name('settings.lahajati');
 
     Route::get('settings/two-factor', TwoFactor::class)
