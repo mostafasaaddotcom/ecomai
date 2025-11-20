@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\ProductAnalysisController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductCopyController;
 use App\Http\Controllers\Api\V1\ProductImageController;
+use App\Http\Controllers\Api\V1\ProductPersonaController;
+use App\Http\Controllers\Api\V1\ProductPersonaFunnelScriptController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
@@ -24,6 +26,12 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('products/{product}/copies', [ProductCopyController::class, 'store']);
     Route::put('product-copies/{productCopy}', [ProductCopyController::class, 'update']);
     Route::delete('product-copies/{productCopy}', [ProductCopyController::class, 'destroy']);
+
+    // Product Personas
+    Route::post('products/{product}/personas', [ProductPersonaController::class, 'store']);
+
+    // Product Persona Funnel Scripts
+    Route::post('products/{product}/funnel-scripts', [ProductPersonaFunnelScriptController::class, 'store']);
 
     // Product Images
     Route::get('products/{product}/images', [ProductImageController::class, 'index']);

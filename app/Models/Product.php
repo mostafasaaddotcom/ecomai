@@ -73,6 +73,22 @@ class Product extends Model
     }
 
     /**
+     * Get the product personas for the product.
+     */
+    public function personas(): HasMany
+    {
+        return $this->hasMany(ProductPersona::class);
+    }
+
+    /**
+     * Get the funnel scripts for the product.
+     */
+    public function funnelScripts(): HasMany
+    {
+        return $this->hasMany(ProductPersonaFunnelScript::class);
+    }
+
+    /**
      * Get the ad creatives for the product.
      */
     public function adCreatives(): HasMany

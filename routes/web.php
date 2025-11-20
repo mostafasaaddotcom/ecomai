@@ -9,8 +9,10 @@ use App\Livewire\Products\Analysis;
 use App\Livewire\Products\Copywriting;
 use App\Livewire\Products\Create;
 use App\Livewire\Products\Edit;
+use App\Livewire\Products\FunnelScripts;
 use App\Livewire\Products\Images;
 use App\Livewire\Products\Index;
+use App\Livewire\Products\Personas;
 use App\Livewire\Products\Show;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\ApiTokens;
@@ -66,6 +68,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('products/{product}/analysis', Analysis::class)->name('products.analysis');
     Route::get('products/{product}/copywriting', Copywriting::class)->name('products.copywriting');
     Route::get('products/{product}/images', Images::class)->name('products.images');
+    Route::get('products/{product}/personas', Personas::class)->name('products.personas');
+    Route::get('products/{product}/funnel-scripts', FunnelScripts::class)->name('products.funnel-scripts');
     Route::get('products/{product}/ad-creatives', AdCreatives::class)->name('products.ad-creatives');
 
     // Image upload routes (AJAX)

@@ -1,7 +1,7 @@
 <div class="flex h-full w-full flex-1 flex-col gap-4">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ __('Products') }}</h1>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ __('products.products') }}</h1>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ __('Manage your products') }}</p>
         </div>
         <flux:button :href="route('products.create')" wire:navigate variant="primary" icon="plus">

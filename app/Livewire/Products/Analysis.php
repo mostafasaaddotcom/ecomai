@@ -131,7 +131,7 @@ class Analysis extends Component
                 ]);
                 session()->flash('error', 'Failed to generate analysis. Please try again.');
             }
-        } catch (\Exception $e) {
+        } catch (\Exception $e) {dd($e->getMessage());
             Log::error('Error generating product analysis', [
                 'product_id' => $this->product->id,
                 'error' => $e->getMessage(),
